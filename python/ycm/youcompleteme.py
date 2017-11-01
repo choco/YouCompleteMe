@@ -29,7 +29,6 @@ import json
 import logging
 import os
 import signal
-import vim
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
 from ycm import base, paths, vimsupport
@@ -733,7 +732,7 @@ class YouCompleteMe( object ):
 
   def _AddTagsFilesIfNeeded( self, extra_data ):
     def GetTagFiles():
-      tag_files = vim.eval( 'tagfiles()' )
+      tag_files = vimsupport.Eval( 'tagfiles()' )
       return [ os.path.join( utils.GetCurrentDirectory(), tag_file )
                for tag_file in tag_files ]
 
@@ -756,8 +755,8 @@ class YouCompleteMe( object ):
   def _AddUltiSnipsDataIfNeeded( self, extra_data ):
     # See :h UltiSnips#SnippetsInCurrentScope.
     try:
-      vim.eval( 'UltiSnips#SnippetsInCurrentScope( 1 )' )
-    except vim.error:
+      vimsupport.Eval( 'UltiSnips#SnippetsInCurrentScope( 1 )' )
+    except vimsupport.Error:
       return
 
     snippets = vimsupport.GetVariableValue( 'g:current_ulti_dict_info' )

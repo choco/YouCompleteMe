@@ -22,7 +22,6 @@ from __future__ import absolute_import
 # Not installing aliases from python-future; it's unreliable and slow.
 from builtins import *  # noqa
 
-import vim
 from ycm import vimsupport
 from ycmd import utils
 from ycmd.completers.completer import Completer
@@ -48,7 +47,7 @@ class OmniCompleter( Completer ):
 
 
   def ShouldUseNow( self, request_data ):
-    self._omnifunc = utils.ToUnicode( vim.eval( '&omnifunc' ) )
+    self._omnifunc = utils.ToUnicode( vimsupport.Eval( '&omnifunc' ) )
     if not self._omnifunc:
       return False
     if self.ShouldUseCache():
@@ -99,7 +98,7 @@ class OmniCompleter( Completer ):
                         "(0,'",
                         vimsupport.EscapeForVim( request_data[ 'query' ] ),
                         "')" ]
-      items = vim.eval( ''.join( omnifunc_call ) )
+      items = vimsupport.Eval( ''.join( omnifunc_call ) )
 
       vimsupport.SetCurrentLineAndColumn( line, column )
 
@@ -111,7 +110,7 @@ class OmniCompleter( Completer ):
 
       return list( filter( bool, items ) )
 
-    except ( TypeError, ValueError, vim.error ) as error:
+    except ( TypeError, ValueError, vimsupport.error ) as error:
       vimsupport.PostVimMessage(
         OMNIFUNC_RETURNED_BAD_VALUE + ' ' + str( error ) )
       return []

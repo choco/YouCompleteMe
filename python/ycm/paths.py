@@ -21,10 +21,10 @@ from __future__ import division
 from __future__ import absolute_import
 # Not installing aliases from python-future; it's unreliable and slow.
 from builtins import *  # noqa
+from ycm import vimsupport
 
 import os
 import sys
-import vim
 import re
 
 # Can't import these from setup.py because it makes nosetests go crazy.
@@ -44,7 +44,7 @@ def PathToPythonInterpreter():
   # impacts startup time.
   from ycmd import utils
 
-  python_interpreter = vim.eval( 'g:ycm_server_python_interpreter' )
+  python_interpreter = vimsupport.Eval( 'g:ycm_server_python_interpreter' )
   if python_interpreter:
     python_interpreter = utils.FindExecutable( python_interpreter )
     if python_interpreter:

@@ -159,9 +159,15 @@ import os
 import sys
 import traceback
 import vim
+try:
+    vim_eval = vim.api.eval
+    vim_command = vim.api.command
+except AttributeError:
+    vim_eval = vim.eval
+    vim_command = vim.command
 
 # Add python sources folder to the system path.
-script_folder = vim.eval( 's:script_folder_path' )
+script_folder = vim_eval( 's:script_folder_path' )
 sys.path.insert( 0, os.path.join( script_folder, '..', 'python' ) )
 
 from ycm.setup import SetUpSystemPaths, SetUpYCM
@@ -177,16 +183,16 @@ try:
 except Exception as error:
   # We don't use PostVimMessage or EchoText from the vimsupport module because
   # importing this module may fail.
-  vim.command( 'redraw | echohl WarningMsg' )
+  vim_command( 'redraw | echohl WarningMsg' )
   for line in traceback.format_exc().splitlines():
-    vim.command( "echom '{0}'".format( line.replace( "'", "''" ) ) )
+    vim_command( "echom '{0}'".format( line.replace( "'", "''" ) ) )
 
-  vim.command( "echo 'YouCompleteMe unavailable: {0}'"
+  vim_command( "echo 'YouCompleteMe unavailable: {0}'"
                .format( str( error ).replace( "'", "''" ) ) )
-  vim.command( 'echohl None' )
-  vim.command( 'return 0' )
+  vim_command( 'echohl None' )
+  vim_command( 'return 0' )
 else:
-  vim.command( 'return 1' )
+  vim_command( 'return 1' )
 EOF
 endfunction
 
@@ -481,7 +487,7 @@ function! s:OnBufferUnload()
 
   let deleted_buffer_file = expand( '<afile>:p' )
   exec s:python_command "ycm_state.OnBufferUnload(" .
-        \ "vim.eval( 'deleted_buffer_file' ) )"
+        \ "vim_eval( 'deleted_buffer_file' ) )"
 endfunction
 
 
@@ -813,7 +819,7 @@ endfunction
 
 
 function! s:ToggleLogs(...)
-  exec s:python_command "ycm_state.ToggleLogs( *vim.eval( 'a:000' ) )"
+  exec s:python_command "ycm_state.ToggleLogs( *vim_eval( 'a:000' ) )"
 endfunction
 
 
@@ -841,7 +847,7 @@ function! s:CompleterCommand(...)
   endif
 
   exec s:python_command "ycm_state.SendCommandRequest(" .
-        \ "vim.eval( 'l:arguments' ), vim.eval( 'l:completer' ) )"
+        \ "vim_eval( 'l:arguments' ), vim_eval( 'l:completer' ) )"
 endfunction
 
 

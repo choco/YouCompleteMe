@@ -25,6 +25,12 @@ from builtins import *  # noqa
 
 from future.utils import iterkeys
 import vim
+try:
+    vim_eval = vim.api.eval
+    vim_command = vim.api.command
+except AttributeError:
+    vim_eval = vim.eval
+    vim_command = vim.command
 import os
 import json
 import re
@@ -175,7 +181,7 @@ def GetBufferChangedTick( bufnr ):
 def UnplaceSignInBuffer( buffer_number, sign_id ):
   if buffer_number < 0:
     return
-  vim.command(
+  Command(
     'try | exec "sign unplace {0} buffer={1}" | catch /E158/ | endtry'.format(
         sign_id, buffer_number ) )
 
@@ -187,7 +193,7 @@ def PlaceSign( sign_id, line_num, buffer_num, is_error = True ):
     line_num = 1
 
   sign_name = 'YcmError' if is_error else 'YcmWarning'
-  vim.command( 'sign place {0} name={1} line={2} buffer={3}'.format(
+  Command( 'sign place {0} name={1} line={2} buffer={3}'.format(
     sign_id, sign_name, line_num, buffer_num ) )
 
 
@@ -195,7 +201,7 @@ def ClearYcmSyntaxMatches():
   matches = VimExpressionToPythonType( 'getmatches()' )
   for match in matches:
     if match[ 'group' ].startswith( 'Ycm' ):
-      vim.eval( 'matchdelete({0})'.format( match[ 'id' ] ) )
+      Eval( 'matchdelete({0})'.format( match[ 'id' ] ) )
 
 
 def AddDiagnosticSyntaxMatch( line_num,
@@ -246,7 +252,7 @@ def LineAndColumnNumbersClamped( line_num, column_num ):
 def SetLocationList( diagnostics ):
   """Populate the location list with diagnostics. Diagnostics should be in
   qflist format; see ":h setqflist" for details."""
-  vim.eval( 'setloclist( 0, {0} )'.format( json.dumps( diagnostics ) ) )
+  Eval( 'setloclist( 0, {0} )'.format( json.dumps( diagnostics ) ) )
 
 
 def OpenLocationList( focus = False, autoclose = False ):
@@ -256,17 +262,17 @@ def OpenLocationList( focus = False, autoclose = False ):
   location list window becomes the active window. When autoclose is set to True,
   the location list window is automatically closed after an entry is
   selected."""
-  vim.command( 'lopen' )
+  Command( 'lopen' )
 
   SetFittingHeightForCurrentWindow()
 
   if autoclose:
     # This autocommand is automatically removed when the location list window is
     # closed.
-    vim.command( 'au WinLeave <buffer> q' )
+    Command( 'au WinLeave <buffer> q' )
 
   if VariableExists( '#User#YcmLocationOpened' ):
-    vim.command( 'doautocmd User YcmLocationOpened' )
+    Command( 'doautocmd User YcmLocationOpened' )
 
   if not focus:
     JumpToPreviousWindow()
@@ -275,7 +281,7 @@ def OpenLocationList( focus = False, autoclose = False ):
 def SetQuickFixList( quickfix_list ):
   """Populate the quickfix list and open it. List should be in qflist format:
   see ":h setqflist" for details."""
-  vim.eval( 'setqflist( {0} )'.format( json.dumps( quickfix_list ) ) )
+  Eval( 'setqflist( {0} )'.format( json.dumps( quickfix_list ) ) )
 
 
 def OpenQuickFixList( focus = False, autoclose = False ):
@@ -283,17 +289,17 @@ def OpenQuickFixList( focus = False, autoclose = False ):
   height automatically set to fit all entries. This behavior can be overridden
   by using the YcmQuickFixOpened autocommand.
   See the OpenLocationList function for the focus and autoclose options."""
-  vim.command( 'botright copen' )
+  Command( 'botright copen' )
 
   SetFittingHeightForCurrentWindow()
 
   if autoclose:
     # This autocommand is automatically removed when the quickfix window is
     # closed.
-    vim.command( 'au WinLeave <buffer> q' )
+    Command( 'au WinLeave <buffer> q' )
 
   if VariableExists( '#User#YcmQuickFixOpened' ):
-    vim.command( 'doautocmd User YcmQuickFixOpened' )
+    Command( 'doautocmd User YcmQuickFixOpened' )
 
   if not focus:
     JumpToPreviousWindow()
@@ -304,7 +310,7 @@ def SetFittingHeightForCurrentWindow():
   fitting_height = 0
   for line in vim.current.buffer:
     fitting_height += len( line ) // window_width + 1
-  vim.command( '{0}wincmd _'.format( fitting_height ) )
+  Command( '{0}wincmd _'.format( fitting_height ) )
 
 
 def ConvertDiagnosticsToQfList( diagnostics ):
@@ -340,7 +346,7 @@ def ConvertDiagnosticsToQfList( diagnostics ):
 
 
 def GetVimGlobalsKeys():
-  return vim.eval( 'keys( g: )' )
+  return Eval( 'keys( g: )' )
 
 
 def VimExpressionToPythonType( vim_expression ):
@@ -350,7 +356,7 @@ def VimExpressionToPythonType( vim_expression ):
   integer, returns an integer, otherwise returns the result converted to a
   Unicode string."""
 
-  result = vim.eval( vim_expression )
+  result = Eval( vim_expression )
   if not ( isinstance( result, str ) or isinstance( result, bytes ) ):
     return result
 
@@ -386,7 +392,7 @@ def TryJumpLocationInOpenedTab( filename, line, column ):
         vim.current.window.cursor = ( line, column - 1 )
 
         # Center the screen on the jumped-to location
-        vim.command( 'normal! zz' )
+        Command( 'normal! zz' )
         return True
   # 'filename' is not opened in any tab pages
   return False
@@ -403,7 +409,7 @@ def GetVimCommand( user_command, default = 'edit' ):
 # Both |line| and |column| need to be 1-based
 def JumpToLocation( filename, line, column ):
   # Add an entry to the jumplist
-  vim.command( "normal! m'" )
+  Command( "normal! m'" )
 
   if filename != GetCurrentBufferFilepath():
     # We prefix the command with 'keepjumps' so that opening the file is not
@@ -421,7 +427,7 @@ def JumpToLocation( filename, line, column ):
 
     vim_command = GetVimCommand( user_command )
     try:
-      vim.command( 'keepjumps {0} {1}'.format( vim_command,
+      Command( 'keepjumps {0} {1}'.format( vim_command,
                                                EscapedFilepath( filename ) ) )
     # When the file we are trying to jump to has a swap file
     # Vim opens swap-exists-choices dialog and throws vim.error with E325 error,
@@ -438,7 +444,7 @@ def JumpToLocation( filename, line, column ):
   vim.current.window.cursor = ( line, column - 1 )
 
   # Center the screen on the jumped-to location
-  vim.command( 'normal! zz' )
+  Command( 'normal! zz' )
 
 
 def NumLinesInBuffer( buffer_object ):
@@ -460,10 +466,10 @@ def PostVimMessage( message, warning = True, truncate = False ):
   # Displaying a new message while previous ones are still on the status line
   # might lead to a hit-enter prompt or the message appearing without a
   # newline so we do a redraw first.
-  vim.command( 'redraw' )
+  Command( 'redraw' )
 
   if warning:
-    vim.command( 'echohl WarningMsg' )
+    Command( 'echohl WarningMsg' )
 
   message = ToUnicode( message )
 
@@ -476,20 +482,20 @@ def PostVimMessage( message, warning = True, truncate = False ):
 
     old_ruler = GetIntValue( '&ruler' )
     old_showcmd = GetIntValue( '&showcmd' )
-    vim.command( 'set noruler noshowcmd' )
+    Command( 'set noruler noshowcmd' )
 
-    vim.command( "{0} '{1}'".format( echo_command,
+    Command( "{0} '{1}'".format( echo_command,
                                      EscapeForVim( message ) ) )
 
     SetVariableValue( '&ruler', old_ruler )
     SetVariableValue( '&showcmd', old_showcmd )
   else:
     for line in message.split( '\n' ):
-      vim.command( "{0} '{1}'".format( echo_command,
+      Command( "{0} '{1}'".format( echo_command,
                                        EscapeForVim( line ) ) )
 
   if warning:
-    vim.command( 'echohl None' )
+    Command( 'echohl None' )
 
 
 def PresentDialog( message, choices, default_choice_index = 0 ):
@@ -557,7 +563,7 @@ def SelectFromList( prompt, items ):
 
   # For an explanation of the purpose of inputsave() / inputrestore(),
   # see :help input(). Briefly, it makes inputlist() work as part of a mapping.
-  vim.eval( 'inputsave()' )
+  Eval( 'inputsave()' )
   try:
     # Vim returns the number the user entered, or the line number the user
     # clicked. This may be wildly out of range for our list. It might even be
@@ -574,7 +580,7 @@ def SelectFromList( prompt, items ):
   except KeyboardInterrupt:
     selected = -1
   finally:
-    vim.eval( 'inputrestore()' )
+    Eval( 'inputrestore()' )
 
   if selected < 0 or selected >= len( items ):
     # User selected something outside of the range
@@ -607,19 +613,28 @@ def VariableExists( variable ):
 
 
 def SetVariableValue( variable, value ):
-  vim.command( "let {0} = {1}".format( variable, json.dumps( value ) ) )
+  Command( "let {0} = {1}".format( variable, json.dumps( value ) ) )
 
 
 def GetVariableValue( variable ):
-  return vim.eval( variable )
+  return Eval( variable )
 
 
 def GetBoolValue( variable ):
-  return bool( int( vim.eval( variable ) ) )
+  return bool( int( Eval( variable ) ) )
 
 
 def GetIntValue( variable ):
-  return int( vim.eval( variable ) )
+  return int( Eval( variable ) )
+
+def Command( variable ):
+  return Command( variable )
+
+def Eval( variable ):
+  return vim_eval( variable )
+
+def Error:
+  return vim.error
 
 
 def _SortChunksByFile( chunks ):
@@ -745,11 +760,11 @@ def ReplaceChunks( chunks ):
       # Some plugins (I'm looking at you, syntastic) might open a location list
       # for the window we just opened. We don't want that location list hanging
       # around, so we close it. lclose is a no-op if there is no location list.
-      vim.command( 'lclose' )
+      Command( 'lclose' )
 
       # Note that this doesn't lose our changes. It simply "hides" the buffer,
       # which can later be re-accessed via the quickfix list or `:ls`
-      vim.command( 'hide' )
+      Command( 'hide' )
 
   # Open the quickfix list, populated with entries for each location we changed.
   if locations:
@@ -862,7 +877,7 @@ def InsertNamespace( namespace ):
     expr = GetVariableValue( 'g:ycm_csharp_insert_namespace_expr' )
     if expr:
       SetVariableValue( "g:ycm_namespace_to_insert", namespace )
-      vim.eval( expr )
+      Eval( expr )
       return
 
   pattern = '^\s*using\(\s\+[a-zA-Z0-9]\+\s\+=\)\?\s\+[a-zA-Z0-9.]\+\s*;\s*'
@@ -890,29 +905,29 @@ def LineTextInCurrentBuffer( line_number ):
 
 def ClosePreviewWindow():
   """ Close the preview window if it is present, otherwise do nothing """
-  vim.command( 'silent! pclose!' )
+  Command( 'silent! pclose!' )
 
 
 def JumpToPreviewWindow():
   """ Jump the vim cursor to the preview window, which must be active. Returns
   boolean indicating if the cursor ended up in the preview window """
-  vim.command( 'silent! wincmd P' )
+  Command( 'silent! wincmd P' )
   return vim.current.window.options[ 'previewwindow' ]
 
 
 def JumpToPreviousWindow():
   """ Jump the vim cursor to its previous window position """
-  vim.command( 'silent! wincmd p' )
+  Command( 'silent! wincmd p' )
 
 
 def JumpToTab( tab_number ):
   """Jump to Vim tab with corresponding number """
-  vim.command( 'silent! tabn {0}'.format( tab_number ) )
+  Command( 'silent! tabn {0}'.format( tab_number ) )
 
 
 def OpenFileInPreviewWindow( filename ):
   """ Open the supplied filename in the preview window """
-  vim.command( 'silent! pedit! ' + filename )
+  Command( 'silent! pedit! ' + filename )
 
 
 def WriteToPreviewWindow( message ):
@@ -927,7 +942,7 @@ def WriteToPreviewWindow( message ):
 
   ClosePreviewWindow()
 
-  OpenFileInPreviewWindow( vim.eval( 'tempname()' ) )
+  OpenFileInPreviewWindow( Eval( 'tempname()' ) )
 
   if JumpToPreviewWindow():
     # We actually got to the preview window. By default the preview window can't
@@ -967,7 +982,7 @@ def CloseBuffersForFilename( filename ):
   """Close all buffers for a specific file."""
   buffer_number = GetBufferNumberForFilename( filename, False )
   while buffer_number != -1:
-    vim.command( 'silent! bwipeout! {0}'.format( buffer_number ) )
+    Command( 'silent! bwipeout! {0}'.format( buffer_number ) )
     new_buffer_number = GetBufferNumberForFilename( filename, False )
     if buffer_number == new_buffer_number:
       raise RuntimeError( "Buffer {0} for filename '{1}' should already be "
@@ -1006,7 +1021,7 @@ def OpenFilename( filename, options = {} ):
 
   # Open the file.
   try:
-    vim.command( '{0}{1} {2}'.format( size, command, filename ) )
+    Command( '{0}{1} {2}'.format( size, command, filename ) )
   # When the file we are trying to jump to has a swap file,
   # Vim opens swap-exists-choices dialog and throws vim.error with E325 error,
   # or KeyboardInterrupt after user selects one of the options which actually
@@ -1050,8 +1065,8 @@ def _SetUpLoadedBuffer( command, filename, fix, position, watch ):
 
   if watch:
     vim.current.buffer.options[ 'autoread' ] = True
-    vim.command( "exec 'au BufEnter <buffer> :silent! checktime {0}'"
+    Command( "exec 'au BufEnter <buffer> :silent! checktime {0}'"
                  .format( filename ) )
 
   if position == 'end':
-    vim.command( 'silent! normal! Gzz' )
+    Command( 'silent! normal! Gzz' )
