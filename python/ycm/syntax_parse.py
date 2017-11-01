@@ -69,9 +69,10 @@ class SyntaxGroup( object ):
 
 
 def SyntaxKeywordsForCurrentBuffer():
-  vimsupport.Command( 'redir => b:ycm_syntax'
-                      'silent! syntax list'
-                      'redir END' )
+  cmd = ('redir => b:ycm_syntax |'
+         'silent! syntax list |'
+         'redir END')
+  vimsupport.Command( cmd )
   syntax_output = vimsupport.VimExpressionToPythonType( 'b:ycm_syntax' )
   return _KeywordsFromSyntaxListOutput( syntax_output )
 

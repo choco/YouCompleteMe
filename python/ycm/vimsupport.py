@@ -617,12 +617,12 @@ def GetIntValue( variable ):
   return int( Eval( variable ) )
 
 def Command( variable ):
-  return Command( variable )
+  return vim_command( variable )
 
 def Eval( variable ):
   return vim_eval( variable )
 
-def Error:
+def Error():
   return vim.error
 
 
