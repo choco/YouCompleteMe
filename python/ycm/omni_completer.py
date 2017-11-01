@@ -110,7 +110,7 @@ class OmniCompleter( Completer ):
 
       return list( filter( bool, items ) )
 
-    except ( TypeError, ValueError, vimsupport.error ) as error:
+    except ( TypeError, ValueError, vimsupport.Error() ) as error:
       vimsupport.PostVimMessage(
         OMNIFUNC_RETURNED_BAD_VALUE + ' ' + str( error ) )
       return []
